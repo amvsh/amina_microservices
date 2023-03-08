@@ -1,13 +1,17 @@
+from os import name
 import time
 import random
+
 from sql_queries import create_table, insert_object
 from object import Object
+from credentials import conn
 
-create_table()
+create_table(conn)
 
-if __name__ == '__main__':
+if name == 'main':
     while True:
         insert_object(
+            conn,
             Object(
                 name=random.choice(["Coffee Boom", "Travelers", "Papa Johns", "McDonalds", "KFC", "Burger King", "Pizza Hut", "Subway", "Starbucks"]),
                 capacity=random.randint(20, 100),

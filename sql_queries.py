@@ -1,16 +1,14 @@
 import psycopg2
+from sqlalchemy.engine import Connection
+from sqlalchemy import text
+
+
 
 from object import Object
 
-conn = psycopg2.connect(
-    host="test.dsacademy.kz",
-    database="fortesting",
-    user="testing",
-    password="testing123"
-)
 
 
-def create_table():
+def create_table(conn: Connection):
     query = """
     CREATE TABLE IF NOT EXISTS objects_amina (
         id SERIAL PRIMARY KEY,
@@ -23,42 +21,50 @@ def create_table():
         )
     """
 
-    cursor = conn.cursor()
-    cursor.execute(query)
+
+    conn.execute(text(query))
     conn.commit()
 
 
-def insert_object(object: Object):
+def insert_object(conn: Connection, object: Object):
     query = """
     INSERT INTO objects_amina (name, capacity, amount_of_people, is_full, top_level, likes)
-    VALUES (%s, %s, %s, %s, %s, %s)
+    VALUES (:name, :capacity, :amount_of_people, :is_full, :top_level, :likes)
     """
 
-    cursor = conn.cursor()
-    cursor.execute(query, (object.name, object.capacity, object.amount_of_people,
-                   object.is_full, object.top_level, object.likes))
+    conn.execute(
+        text(query),
+        parameters={
+            "capacity": object.capacity, 
+            "amount_of_people" : object.amount_of_people,
+            "is_full" : object.is_full, 
+            "top_level" : object.top_level, 
+            "likes" : object.likes,
+            "name": object.name,
+            },
+    )
     conn.commit()
 
 
-def set_object_top_level(level_value: int, object_id: int):
+
+def set_object_top_level(conn: Connection, level_value: int, object_id: int):
     query = "UPDATE objects_amina SET top_level={} WHERE id={};".format(
         level_value, object_id)
-    cursor = conn.cursor()
-    cursor.execute(query)
+    conn.execute(text(query))
     conn.commit()
 
 
-def check_object_is_full():
+def check_object_is_full(conn: Connection):
     query = "UPDATE objects_amina SET is_full=1 WHERE amount_of_people>=capacity;"
-    cursor = conn.cursor()
-    cursor.execute(query)
+    conn.execute(text(query))
     conn.commit()
 
 
-def get_objects() -> list[Object]:
+def get_objects(conn: Connection) -> list[Object]:
     query = "SELECT * FROM objects_amina;"
-    cursor = conn.cursor()
-    cursor.execute(query)
+    print("ddd")
+    transactions = conn.execute(text(query)).fetchall()
+    print("ddd1")
     return [Object(
         id=object[0],
         name=object[1],
@@ -67,4 +73,4 @@ def get_objects() -> list[Object]:
         is_full=object[4],
         top_level=object[5],
         likes=object[6],
-    ) for object in cursor.fetchall()]
+    ) for object in transactions]
